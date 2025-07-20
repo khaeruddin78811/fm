@@ -1,164 +1,169 @@
-<!DOCTYPE html><html lang="en" data-theme="dark">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>کدنویسی و نمایشگر</title>
-  <style>
-    :root {
-      --bg: #121212;
-      --fg: #e0e0e0;
-      --btn: #1f1f1f;
-      --highlight: #007bff;
-    }
-    [data-theme="light"] {
-      --bg: #ffffff;
-      --fg: #000000;
-      --btn: #f0f0f0;
-      --highlight: #007bff;
-    }
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background: var(--bg);
-      color: var(--fg);
-    }
-    header {
-      background: var(--btn);
-      padding: 0.5rem;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    header select,
-    header button,
-    header input[type="number"] {
-      padding: 0.4rem;
-      border: none;
-      border-radius: 8px;
-      background: var(--highlight);
-      color: white;
-    }
-    #editor {
-      display: flex;
-      flex-direction: column;
-      height: 50vh;
-    }
-    textarea {
-      flex: 1;
-      padding: 0.5rem;
-      font-family: monospace;
-      font-size: 1rem;
-      border: none;
-      outline: none;
-      resize: none;
-    }
-    #viewer {
-      height: 50vh;
-      width: 100%;
-      border: none;
-      background: white;
-    }
-    .hidden {
-      display: none;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <div>
-      <select id="mode">
-        <option value="html">HTML</option>
-        <option value="css">CSS</option>
-        <option value="js">JavaScript</option>
-        <option value="multi">HTML/CSS/JS</option>
-      </select>
-      <input type="number" id="duration" value="62" min="10" max="90" title="مدت ویدیو (ثانیه)">
-      <button onclick="runCode()">▶️ اجرا</button>
-      <button onclick="downloadOutput()">📽️ دانلود خروجی</button>
-      <button onclick="toggleTheme()">🌓 تم شب/روز</button>
+<div class="top-bar">
+  <div class="lang-select">
+    <button onclick="setMode('html')">HTML</button>
+    <button onclick="setMode('css')">CSS</button>
+    <button onclick="setMode('js')">JS</button>
+    <button onclick="setMode('multi')">HTML/CSS/JS</button>
+  </div>
+  <div class="theme-toggle">
+    <button onclick="toggleTheme()">🌓</button>
+  </div>
+  <div class="download-menu">
+    <button onclick="toggleDownloadMenu()">📥 دانلود خروجی</button>
+    <div id="downloadOptions" class="hidden">
+      <div>
+        <strong>🖼️ تصویر</strong><br>
+        <select id="imgQuality">
+          <option value="480">480p</option>
+          <option value="720">720p</option>
+          <option value="1080">1080p</option>
+        </select>
+        <button onclick="downloadImage()">دانلود تصویر</button>
+      </div>
+      <div>
+        <strong>🎞️ فیلم</strong><br>
+        <label>مدت (ثانیه):</label>
+        <input type="number" id="videoDuration" min="10" max="90" value="30"><br>
+        <label>کیفیت:</label>
+        <select id="videoQuality">
+          <option value="480">480p</option>
+          <option value="720">720p</option>
+          <option value="1080">1080p</option>
+        </select>
+        <button onclick="downloadVideo()">دانلود ویدیو</button>
+      </div>
     </div>
-  </header>  <div id="editor">
-    <textarea id="html" placeholder="HTML بنویسید..."></textarea>
-    <textarea id="css" class="hidden" placeholder="CSS بنویسید..."></textarea>
-    <textarea id="js" class="hidden" placeholder="JavaScript بنویسید..."></textarea>
-  </div>  <iframe id="viewer"></iframe>  <script>
-    const modeSelect = document.getElementById("mode");
-    const htmlArea = document.getElementById("html");
-    const cssArea = document.getElementById("css");
-    const jsArea = document.getElementById("js");
-    const viewer = document.getElementById("viewer");
+  </div>
+</div>
+<div class="editor-container">
+  <div id="terminal" class="shadow-box">
+    <strong>ترمینال خروجی</strong>
+    <pre id="output"></pre>
+  </div>
+  <div id="viewer" class="shadow-box"></div>
+</div>
+<div id="editors" class="multi-mode">
+  <textarea id="html" placeholder="HTML"></textarea>
+  <textarea id="css" placeholder="CSS"></textarea>
+  <textarea id="js" placeholder="JS"></textarea>
+</div>
+<button onclick="runCode()">▶ اجرای کد</button><style>
+body {
+  font-family: sans-serif;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
 
-    modeSelect.addEventListener("change", () => {
-      htmlArea.classList.remove("hidden");
-      cssArea.classList.remove("hidden");
-      jsArea.classList.remove("hidden");
-      const mode = modeSelect.value;
-      if (mode === "html") {
-        cssArea.classList.add("hidden");
-        jsArea.classList.add("hidden");
-      } else if (mode === "css") {
-        htmlArea.classList.add("hidden");
-        jsArea.classList.add("hidden");
-      } else if (mode === "js") {
-        htmlArea.classList.add("hidden");
-        cssArea.classList.add("hidden");
-      }
-    });
+:root {
+  --bg: #fff;
+  --text: #000;
+  --shadow: rgba(0, 0, 0, 0.2);
+}
 
-    function runCode() {
-      const html = htmlArea.value;
-      const css = cssArea.value;
-      const js = jsArea.value;
-      const mode = modeSelect.value;
-      let code = "";
-      if (mode === "html") {
-        code = html;
-      } else if (mode === "css") {
-        code = `<style>${css}</style>`;} else if (mode === "js") {
-    code = `<script>${js}<\/script>`;
+body.dark {
+  --bg: #1e1e1e;
+  --text: #f0f0f0;
+  --shadow: rgba(255, 255, 255, 0.2);
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background: var(--bg);
+}
+
+.top-bar button {
+  margin: 0 5px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 5px;
+  background: #00aaff;
+  color: white;
+  cursor: pointer;
+}
+
+.download-menu {
+  position: relative;
+}
+
+#downloadOptions {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  background: var(--bg);
+  border: 1px solid #ccc;
+  padding: 10px;
+  display: flex;
+  gap: 20px;
+  box-shadow: 0 0 10px var(--shadow);
+}
+
+.hidden {
+  display: none;
+}
+
+.editor-container {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 10px;
+}
+
+.shadow-box {
+  border: 1px solid #ccc;
+  box-shadow: 0 0 8px var(--shadow);
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 150px;
+}
+
+#viewer {
+  height: 200px;
+}
+
+#editors textarea {
+  width: 100%;
+  height: 100px;
+  margin-top: 5px;
+  font-family: monospace;
+  background: #f9f9f9;
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+button[onclick="runCode()"] {
+  margin: 10px;
+  padding: 10px 20px;
+  background: green;
+  color: white;
+  border: none;
+  border-radius: 10px;
+}
+</style><script>
+function setMode(mode) {
+  const editors = document.getElementById('editors');
+  if (mode === 'multi') {
+    editors.classList.add('multi-mode');
   } else {
-    code = `<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
-  }
-  viewer.srcdoc = code;
-}
-
-function toggleTheme() {
-  const root = document.documentElement;
-  const current = root.getAttribute("data-theme");
-  root.setAttribute("data-theme", current === "light" ? "dark" : "light");
-}
-
-async function downloadOutput() {
-  const duration = Math.min(90, Math.max(10, parseInt(document.getElementById("duration").value) || 62));
-  const iframe = document.getElementById("viewer");
-  try {
-    const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 } });
-    const mediaRecorder = new MediaRecorder(stream);
-    const chunks = [];
-
-    mediaRecorder.ondataavailable = e => chunks.push(e.data);
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(chunks, { type: 'video/mp4' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "output.mp4";
-      a.click();
-      URL.revokeObjectURL(url);
-    };
-
-    mediaRecorder.start();
-    setTimeout(() => {
-      mediaRecorder.stop();
-      stream.getTracks().forEach(track => track.stop());
-    }, duration * 1000);
-  } catch (err) {
-    alert("خطا در ضبط نمایشگر: " + err.message);
+    editors.classList.remove('multi-mode');
+    ['html','css','js'].forEach(id => document.getElementById(id).style.display = (id === mode ? 'block' : 'none'));
   }
 }
 
-  </script>
-</body>
-</html>
+function runCode() {
+  const html = document.getElementById('html').value;
+  const css = `<style>${document.getElementById('css').value}</style>`;const js = <script>${document.getElementById('js').value}<\/script>; const viewer = document.getElementById('viewer'); viewer.innerHTML = html + css + js; }
+
+function toggleTheme() { document.body.classList.toggle('dark'); }
+
+function toggleDownloadMenu() { document.getElementById('downloadOptions').classList.toggle('hidden'); }
+
+function downloadImage() { alert("دانلود تصویر با کیفیت: " + document.getElementById("imgQuality").value); // Logic for downloading screenshot here }
+
+function downloadVideo() { const dur = document.getElementById("videoDuration").value; const qual = document.getElementById("videoQuality").value; alert("دانلود ویدیو با مدت " + dur + " ثانیه و کیفیت " + qual); // Logic for video recording here } </script>
+
