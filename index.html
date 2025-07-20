@@ -1,76 +1,64 @@
-<!DOCTYPE html><html lang="fa">
+<!DOCTYPE html><html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>کدنویسی و نمایشگر</title>
   <style>
+    :root {
+      --bg: #121212;
+      --fg: #e0e0e0;
+      --btn: #1f1f1f;
+      --highlight: #007bff;
+    }
+    [data-theme="light"] {
+      --bg: #ffffff;
+      --fg: #000000;
+      --btn: #f0f0f0;
+      --highlight: #007bff;
+    }
     body {
       margin: 0;
       font-family: sans-serif;
-      background-color: #1e1e1e;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
+      background: var(--bg);
+      color: var(--fg);
     }
     header {
+      background: var(--btn);
+      padding: 0.5rem;
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      padding: 0.5rem 1rem;
-      background-color: #2c2c2c;
-    }
-    header h1 {
-      font-size: 1.2rem;
-      margin: 0;
-    }
-    .buttons {
-      display: flex;
       gap: 0.5rem;
     }
-    button, select {
-      padding: 0.4rem 0.8rem;
+    header select,
+    header button,
+    header input[type="number"] {
+      padding: 0.4rem;
       border: none;
-      border-radius: 6px;
-      background-color: #4c4c4c;
-      color: #fff;
-      cursor: pointer;
-    }
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    #terminal {
-      flex: 1;
-      background: #111;
-      padding: 1rem;
-      overflow: auto;
-      font-family: monospace;
-      border-bottom: 2px solid #444;
+      border-radius: 8px;
+      background: var(--highlight);
+      color: white;
     }
     #editor {
-      flex: 1;
       display: flex;
+      flex-direction: column;
+      height: 50vh;
     }
     textarea {
       flex: 1;
-      height: 100%;
-      padding: 1rem;
-      background-color: #2e2e2e;
-      color: #fff;
+      padding: 0.5rem;
       font-family: monospace;
+      font-size: 1rem;
       border: none;
+      outline: none;
       resize: none;
     }
-    iframe {
-      flex: 1;
+    #viewer {
+      height: 50vh;
+      width: 100%;
       border: none;
-      background-color: #fff;
-    }
-    .output-container {
-      display: flex;
-      flex: 1;
+      background: white;
     }
     .hidden {
       display: none;
@@ -79,77 +67,98 @@
 </head>
 <body>
   <header>
-    <h1>🎨 محیط کدنویسی</h1>
-    <div class="buttons">
+    <div>
+      <select id="mode">
+        <option value="html">HTML</option>
+        <option value="css">CSS</option>
+        <option value="js">JavaScript</option>
+        <option value="multi">HTML/CSS/JS</option>
+      </select>
+      <input type="number" id="duration" value="62" min="10" max="90" title="مدت ویدیو (ثانیه)">
       <button onclick="runCode()">▶️ اجرا</button>
-      <div>
-        <select id="downloadType">
-          <option value="png">📷 تصویر (PNG)</option>
-          <option value="mp4">🎥 ویدیو (MP4)</option>
-        </select>
-        <select id="videoQuality">
-          <option value="1080">1080p</option>
-          <option value="720">720p</option>
-          <option value="480">480p</option>
-        </select>
-        <button onclick="downloadOutput()">⬇️ دانلود خروجی</button>
-      </div>
+      <button onclick="downloadOutput()">📽️ دانلود خروجی</button>
+      <button onclick="toggleTheme()">🌓 تم شب/روز</button>
     </div>
-  </header>
-  <main>
-    <div id="terminal">🔧 ترمینال کدنویسی آماده است...</div>
-    <div id="editor">
-      <textarea id="htmlCode" placeholder="HTML بنویسید..."></textarea>
-      <textarea id="cssCode" placeholder="CSS بنویسید..."></textarea>
-      <textarea id="jsCode" placeholder="JS بنویسید..."></textarea>
-    </div>
-    <div class="output-container">
-      <iframe id="viewer"></iframe>
-    </div>
-  </main>
-  <script>
+  </header>  <div id="editor">
+    <textarea id="html" placeholder="HTML بنویسید..."></textarea>
+    <textarea id="css" class="hidden" placeholder="CSS بنویسید..."></textarea>
+    <textarea id="js" class="hidden" placeholder="JavaScript بنویسید..."></textarea>
+  </div>  <iframe id="viewer"></iframe>  <script>
+    const modeSelect = document.getElementById("mode");
+    const htmlArea = document.getElementById("html");
+    const cssArea = document.getElementById("css");
+    const jsArea = document.getElementById("js");
+    const viewer = document.getElementById("viewer");
+
+    modeSelect.addEventListener("change", () => {
+      htmlArea.classList.remove("hidden");
+      cssArea.classList.remove("hidden");
+      jsArea.classList.remove("hidden");
+      const mode = modeSelect.value;
+      if (mode === "html") {
+        cssArea.classList.add("hidden");
+        jsArea.classList.add("hidden");
+      } else if (mode === "css") {
+        htmlArea.classList.add("hidden");
+        jsArea.classList.add("hidden");
+      } else if (mode === "js") {
+        htmlArea.classList.add("hidden");
+        cssArea.classList.add("hidden");
+      }
+    });
+
     function runCode() {
-      const html = document.getElementById('htmlCode').value;
-      const css = document.getElementById('cssCode').value;
-      const js = document.getElementById('jsCode').value;
-      const output = `<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
-      const viewer = document.getElementById('viewer');
-      viewer.srcdoc = output;
-      document.getElementById('terminal').innerText = '✅ کد با موفقیت اجرا شد';
-    }function downloadOutput() {
-  const viewer = document.getElementById('viewer');
-  const type = document.getElementById('downloadType').value;
-  const quality = document.getElementById('videoQuality').value;
+      const html = htmlArea.value;
+      const css = cssArea.value;
+      const js = jsArea.value;
+      const mode = modeSelect.value;
+      let code = "";
+      if (mode === "html") {
+        code = html;
+      } else if (mode === "css") {
+        code = `<style>${css}</style>`;} else if (mode === "js") {
+    code = `<script>${js}<\/script>`;
+  } else {
+    code = `<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
+  }
+  viewer.srcdoc = code;
+}
 
-  html2canvas(viewer.contentDocument.body).then(canvas => {
-    if (type === 'png') {
-      const link = document.createElement('a');
-      link.download = 'output.png';
-      link.href = canvas.toDataURL();
-      link.click();
-    } else if (type === 'mp4') {
-      const stream = viewer.contentWindow.document.body.captureStream();
-      const recorder = new MediaRecorder(stream);
-      let chunks = [];
+function toggleTheme() {
+  const root = document.documentElement;
+  const current = root.getAttribute("data-theme");
+  root.setAttribute("data-theme", current === "light" ? "dark" : "light");
+}
 
-      recorder.ondataavailable = e => chunks.push(e.data);
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/mp4' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `output_${quality}p.mp4`;
-        a.click();
-        URL.revokeObjectURL(url);
-      };
+async function downloadOutput() {
+  const duration = Math.min(90, Math.max(10, parseInt(document.getElementById("duration").value) || 62));
+  const iframe = document.getElementById("viewer");
+  try {
+    const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 } });
+    const mediaRecorder = new MediaRecorder(stream);
+    const chunks = [];
 
-      recorder.start();
-      setTimeout(() => recorder.stop(), 10000); // ضبط ۱۰ ثانیه‌ای
-    }
-  });
+    mediaRecorder.ondataavailable = e => chunks.push(e.data);
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/mp4' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "output.mp4";
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    mediaRecorder.start();
+    setTimeout(() => {
+      mediaRecorder.stop();
+      stream.getTracks().forEach(track => track.stop());
+    }, duration * 1000);
+  } catch (err) {
+    alert("خطا در ضبط نمایشگر: " + err.message);
+  }
 }
 
   </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </body>
 </html>
